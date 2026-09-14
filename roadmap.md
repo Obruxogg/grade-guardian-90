@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Fundação segura: autenticação, perfis, estrutura acadêmica e auditoria
+- [x] Fundação segura: autenticação, perfis, estrutura acadêmica e auditoria
 - [ ] Importação de alunos com mapeamento, validação e prévia
 - [ ] Provas, questões, publicação, tentativas, autosave e entrega
 - [ ] Correção, notas, resultados e histórico
