@@ -18,7 +18,7 @@ export const Route = createFileRoute("/setup")({
 
 function SetupPage() {
   const navigate = useNavigate();
-  const { refreshProfile, signIn } = useAuth();
+  const { refreshProfile } = useAuth();
 
   const [checkingSetup, setCheckingSetup] = useState(true);
   const [setupRequired, setSetupRequired] = useState(false);
@@ -87,72 +87,72 @@ function SetupPage() {
     setLoading(true);
 
     try {
-      // Step 1: Attempt sign in first in case account already exists in Supabase Auth
+      // Step 1: Try to sign in first — account may already exist
       const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
-      let authenticatedUser = signInData?.user;
+      if (!signInErr && signInData?.user) {
+        // Account already exists and credentials are correct — just assign role/profile
+        console.log("[Setup] Existing user authenticated:", signInData.user.id);
+        const userId = signInData.user.id;
 
-      if (!signInErr && authenticatedUser) {
-        console.log("[Setup] User successfully authenticated via signInWithPassword:", authenticatedUser.id);
-      } else {
-        // Step 2: Try signUp if account does not exist
-        const { data: authData, error: authErr } = await supabase.auth.signUp({
+        await supabase.from("profiles").upsert({
+          id: userId,
+          full_name: fullName.trim(),
           email: email.trim(),
-          password,
-          options: {
-            data: {
-              full_name: fullName.trim(),
-            },
-          },
+          status: "active",
         });
 
-        if (authErr) {
-          console.error("[Setup] Auth signup error:", authErr);
-          if (authErr.message.includes("Signups not allowed")) {
-            setError(
-              "Inscrições públicas desabilitadas no Supabase Cloud: Para cadastrar o primeiro administrador, acesse o painel do Supabase -> Authentication -> Providers -> Email e ative 'Enable Signups'. Caso já possua uma conta, verifique se a senha digitada está correta."
-            );
-          } else {
-            setError(`Erro ao criar conta de autenticação: ${authErr.message}`);
-          }
-          setLoading(false);
-          return;
-        }
+        await supabase.from("user_roles").upsert(
+          { user_id: userId, role: "admin" },
+          { onConflict: "user_id,role" }
+        );
 
-        authenticatedUser = authData?.user ?? null;
+        setSuccessMsg("Administrador ativado com sucesso! Inicializando sessão...");
+        await refreshProfile();
+        setTimeout(() => navigate({ to: "/admin" }), 1000);
+        return;
       }
 
-      if (!authenticatedUser) {
-        setError("Não foi possível autenticar o usuário.");
+      // Step 2: Use bootstrap_admin_account RPC — bypasses "Signups not allowed"
+      // This function directly inserts into auth.users with SECURITY DEFINER
+      const { data: bootstrapUserId, error: bootstrapErr } = await supabase.rpc(
+        "bootstrap_admin_account",
+        {
+          p_email: email.trim(),
+          p_password: password,
+          p_full_name: fullName.trim(),
+        }
+      );
+
+      if (bootstrapErr) {
+        console.error("[Setup] bootstrap_admin_account error:", bootstrapErr);
+        setError(`Erro ao criar administrador: ${bootstrapErr.message}`);
         setLoading(false);
         return;
       }
 
-      // Step 3: Insert or update profile and admin role directly
-      await supabase.from("profiles").upsert({
-        id: authenticatedUser.id,
-        full_name: fullName.trim(),
+      console.log("[Setup] Admin account created via RPC, user_id:", bootstrapUserId);
+
+      // Step 3: Sign in with the newly created credentials
+      const { data: newSignIn, error: newSignInErr } = await supabase.auth.signInWithPassword({
         email: email.trim(),
-        status: "active",
+        password,
       });
 
-      await supabase.from("user_roles").upsert(
-        {
-          user_id: authenticatedUser.id,
-          role: "admin",
-        },
-        { onConflict: "user_id,role" }
-      );
+      if (newSignInErr || !newSignIn?.user) {
+        setError(
+          "Conta criada com sucesso, mas houve um problema ao iniciar a sessão. Tente fazer login normalmente."
+        );
+        setLoading(false);
+        return;
+      }
 
-      setSuccessMsg("Administrador criado e ativado com sucesso! Inicializando sessão...");
+      setSuccessMsg("Administrador criado com sucesso! Inicializando sessão...");
       await refreshProfile();
-
-      setTimeout(async () => {
-        await navigate({ to: "/admin" });
-      }, 1000);
+      setTimeout(() => navigate({ to: "/admin" }), 1000);
     } catch (err) {
       console.error("[Setup] Unexpected exception during setup:", err);
       setError("Ocorreu um erro inesperado durante a criação do administrador.");
