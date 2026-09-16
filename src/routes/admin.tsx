@@ -143,6 +143,13 @@ function AdminDashboard() {
     }
   };
 
+  // Created Credentials Modal State
+  const [createdTeacherCredentials, setCreatedTeacherCredentials] = useState<{
+    name: string;
+    email: string;
+    tempPassword: string;
+  } | null>(null);
+
   const handleCreateTeacher = async (e: React.FormEvent) => {
     e.preventDefault();
     setTeacherFormError(null);
@@ -156,19 +163,15 @@ function AdminDashboard() {
       setTeacherFormError("E-mail válido é obrigatório.");
       return;
     }
-    if (!newTeacherPassword || newTeacherPassword.length < 6) {
-      setTeacherFormError("A senha deve possuir no mínimo 6 caracteres.");
-      return;
-    }
 
     setCreatingTeacher(true);
 
     try {
-      const { error: rpcErr } = await supabase.rpc("admin_create_teacher", {
+      const { data, error: rpcErr } = await supabase.rpc("admin_create_teacher", {
         p_email: newTeacherEmail.trim(),
-        p_password: newTeacherPassword,
         p_full_name: newTeacherName.trim(),
         p_status: newTeacherStatus,
+        p_password: newTeacherPassword ? newTeacherPassword : null,
       });
 
       if (rpcErr) {
@@ -178,17 +181,22 @@ function AdminDashboard() {
         return;
       }
 
-      setTeacherFormSuccess("Professor cadastrado e acesso criado com sucesso!");
+      const res = data as any;
+      const generatedPwd = res?.temp_password || newTeacherPassword || "Senha123!";
+
+      setCreatedTeacherCredentials({
+        name: newTeacherName.trim(),
+        email: newTeacherEmail.trim(),
+        tempPassword: generatedPwd,
+      });
+
       setNewTeacherName("");
       setNewTeacherEmail("");
       setNewTeacherPassword("");
+      setIsTeacherModalOpen(false);
+
       await fetchTeachers();
       await fetchSystemStatus();
-
-      setTimeout(() => {
-        setIsTeacherModalOpen(false);
-        setTeacherFormSuccess(null);
-      }, 1500);
     } catch (err) {
       console.error("[Admin] Exception creating teacher:", err);
       setTeacherFormError("Erro inesperado ao cadastrar professor.");
@@ -713,6 +721,54 @@ function AdminDashboard() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ONE-TIME TEMPORARY CREDENTIALS DISPLAY MODAL */}
+      {createdTeacherCredentials && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 mb-4">
+              <CheckCircle2 className="size-8" />
+            </div>
+            <h3 className="font-display text-xl font-bold text-center">Acesso Criado com Sucesso!</h3>
+            <p className="text-xs text-muted-foreground text-center mt-1">
+              Copie as credenciais temporárias do professor. <strong>Esta senha será exibida uma única vez.</strong>
+            </p>
+
+            <div className="mt-6 space-y-3 rounded-xl border bg-muted/40 p-4 font-mono text-xs">
+              <div>
+                <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-sans">Professor</span>
+                <span className="font-bold text-foreground text-sm">{createdTeacherCredentials.name}</span>
+              </div>
+              <div className="pt-2 border-t border-border">
+                <span className="text-[10px] uppercase font-semibold text-muted-foreground block font-sans">E-mail</span>
+                <span className="text-foreground font-semibold">{createdTeacherCredentials.email}</span>
+              </div>
+              <div className="pt-2 border-t border-border">
+                <span className="text-[10px] uppercase font-semibold text-amber-600 dark:text-amber-400 block font-sans">Senha Temporária Gerada</span>
+                <span className="text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded inline-block mt-1">
+                  {createdTeacherCredentials.tempPassword}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-2">
+              <Button
+                onClick={() => {
+                  const textToCopy = `Acesso do Professor ao Repertório:\nNome: ${createdTeacherCredentials.name}\nE-mail: ${createdTeacherCredentials.email}\nSenha Temporária: ${createdTeacherCredentials.tempPassword}\nLink de Acesso: ${window.location.origin}/login`;
+                  navigator.clipboard.writeText(textToCopy);
+                  alert("Dados de acesso copiados para a área de transferência!");
+                }}
+                className="w-full gap-2 shadow"
+              >
+                COPIAR DADOS DE ACESSO
+              </Button>
+              <Button variant="outline" onClick={() => setCreatedTeacherCredentials(null)} className="w-full">
+                Entendido / Fechar
+              </Button>
+            </div>
           </div>
         </div>
       )}

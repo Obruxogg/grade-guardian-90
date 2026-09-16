@@ -137,8 +137,24 @@ function LoginPage() {
                 </label>
                 <button
                   type="button"
-                  onClick={() => alert("Entre em contato com o administrador do sistema para redefinir sua senha.")}
-                  className="text-xs text-primary hover:underline"
+                  onClick={async () => {
+                    if (!email || !email.includes("@")) {
+                      setErrorMsg("Informe seu e-mail no campo acima para receber as instruções de recuperação.");
+                      return;
+                    }
+                    setErrorMsg(null);
+                    setSubmitting(true);
+                    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+                      redirectTo: `${window.location.origin}/reset-password`,
+                    });
+                    setSubmitting(false);
+                    if (error) {
+                      setErrorMsg(`Erro ao solicitar recuperação: ${error.message}`);
+                    } else {
+                      alert(`Instruções para redefinição de senha foram enviadas para ${email.trim()}. Verifique sua caixa de entrada.`);
+                    }
+                  }}
+                  className="text-xs text-primary font-semibold hover:underline"
                 >
                   Esqueci minha senha
                 </button>
