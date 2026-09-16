@@ -16,7 +16,7 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.is_setup_required() TO anon, authenticated, service_role;
 
--- 2. Bootstrap first admin function
+-- 2. Bootstrap first admin function (authenticated session)
 CREATE OR REPLACE FUNCTION public.bootstrap_admin(p_full_name text)
 RETURNS void
 LANGUAGE plpgsql
@@ -51,6 +51,93 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.bootstrap_admin(text) TO authenticated, service_role;
+
+-- 2b. Bootstrap admin account RPC (bypasses "Signups not allowed for this instance" when public signups are disabled in Supabase config)
+CREATE OR REPLACE FUNCTION public.bootstrap_admin_account(
+  p_email text,
+  p_password text,
+  p_full_name text
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, auth, extensions
+AS $$
+DECLARE
+  _user_id uuid;
+  _encrypted_pwd text;
+BEGIN
+  -- Verify setup is required (0 admins exist)
+  IF EXISTS (SELECT 1 FROM public.user_roles WHERE role = 'admin'::public.app_role) THEN
+    RAISE EXCEPTION 'Configuração inicial já concluída. Já existe um administrador cadastrado.';
+  END IF;
+
+  IF p_email IS NULL OR trim(p_email) = '' THEN
+    RAISE EXCEPTION 'E-mail é obrigatório.';
+  END IF;
+
+  IF p_password IS NULL OR length(p_password) < 6 THEN
+    RAISE EXCEPTION 'Senha deve ter no mínimo 6 caracteres.';
+  END IF;
+
+  _encrypted_pwd := crypt(p_password, gen_salt('bf'));
+
+  -- Check if user already exists in auth.users
+  SELECT id INTO _user_id FROM auth.users WHERE email = p_email;
+
+  IF _user_id IS NOT NULL THEN
+    -- Update existing auth user password and confirm email
+    UPDATE auth.users 
+    SET encrypted_password = _encrypted_pwd,
+        email_confirmed_at = COALESCE(email_confirmed_at, now()),
+        raw_user_meta_data = jsonb_build_object('full_name', p_full_name),
+        updated_at = now()
+    WHERE id = _user_id;
+  ELSE
+    -- Create new auth user
+    _user_id := gen_random_uuid();
+    INSERT INTO auth.users (
+      id,
+      instance_id,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at,
+      role,
+      aud
+    ) VALUES (
+      _user_id,
+      '00000000-0000-0000-0000-000000000000',
+      p_email,
+      _encrypted_pwd,
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      jsonb_build_object('full_name', p_full_name),
+      now(),
+      now(),
+      'authenticated',
+      'authenticated'
+    );
+  END IF;
+
+  -- Create profile
+  INSERT INTO public.profiles (id, full_name, email, status)
+  VALUES (_user_id, COALESCE(NULLIF(trim(p_full_name), ''), 'Administrador'), p_email, 'active'::public.record_status)
+  ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name, email = EXCLUDED.email;
+
+  -- Assign admin role
+  INSERT INTO public.user_roles (user_id, role)
+  VALUES (_user_id, 'admin'::public.app_role)
+  ON CONFLICT (user_id, role) DO NOTHING;
+
+  RETURN _user_id;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.bootstrap_admin_account(text, text, text) TO anon, authenticated, service_role;
 
 -- 3. Admin create teacher function (safe server-side auth user + profile + role + teacher creation)
 CREATE OR REPLACE FUNCTION public.admin_create_teacher(

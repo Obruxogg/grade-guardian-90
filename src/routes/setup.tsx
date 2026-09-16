@@ -18,7 +18,7 @@ export const Route = createFileRoute("/setup")({
 
 function SetupPage() {
   const navigate = useNavigate();
-  const { refreshProfile } = useAuth();
+  const { refreshProfile, signIn } = useAuth();
 
   const [checkingSetup, setCheckingSetup] = useState(true);
   const [setupRequired, setSetupRequired] = useState(false);
@@ -87,43 +87,68 @@ function SetupPage() {
     setLoading(true);
 
     try {
-      // Step 1: Sign up in Supabase Auth
-      const { data: authData, error: authErr } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          data: {
-            full_name: fullName.trim(),
+      // Step 1: Try server-side RPC bootstrap_admin_account (bypasses Signups not allowed restriction)
+      const { data: rpcAccountData, error: rpcAccountErr } = await supabase.rpc(
+        "bootstrap_admin_account",
+        {
+          p_email: email.trim(),
+          p_password: password,
+          p_full_name: fullName.trim(),
+        }
+      );
+
+      if (!rpcAccountErr && rpcAccountData) {
+        console.log("[Setup] Account created via RPC bootstrap_admin_account:", rpcAccountData);
+      } else {
+        console.warn("[Setup] RPC bootstrap_admin_account unavailable or failed, attempting auth.signUp():", rpcAccountErr);
+        
+        // Step 2: Fallback to Supabase Auth signUp
+        const { data: authData, error: authErr } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: {
+              full_name: fullName.trim(),
+            },
           },
-        },
-      });
+        });
 
-      if (authErr) {
-        console.error("[Setup] Auth signup error:", authErr);
-        setError(`Erro ao criar conta de autenticação: ${authErr.message}`);
-        setLoading(false);
-        return;
-      }
+        if (authErr) {
+          console.error("[Setup] Auth signup error:", authErr);
+          if (authErr.message.includes("Signups not allowed")) {
+            setError(
+              "As inscrições públicas estão desabilitadas nesta instância do Supabase. Para ativá-las, acesse o painel do Supabase -> Authentication -> Providers -> Email e ative 'Enable Signups'."
+            );
+          } else {
+            setError(`Erro ao criar conta de autenticação: ${authErr.message}`);
+          }
+          setLoading(false);
+          return;
+        }
 
-      if (!authData.user) {
-        setError("Não foi possível criar o usuário de autenticação.");
-        setLoading(false);
-        return;
-      }
+        if (!authData.user) {
+          setError("Não foi possível criar o usuário de autenticação.");
+          setLoading(false);
+          return;
+        }
 
-      // Step 2: Invoke server RPC to assign admin profile & role
-      const { error: rpcErr } = await supabase.rpc("bootstrap_admin", {
-        p_full_name: fullName.trim(),
-      });
+        // Step 3: Invoke server RPC to assign admin profile & role
+        const { error: rpcErr } = await supabase.rpc("bootstrap_admin", {
+          p_full_name: fullName.trim(),
+        });
 
-      if (rpcErr) {
-        console.error("[Setup] Bootstrap RPC error:", rpcErr);
-        setError(`Erro ao registrar privilégios de administrador: ${rpcErr.message}`);
-        setLoading(false);
-        return;
+        if (rpcErr) {
+          console.error("[Setup] Bootstrap RPC error:", rpcErr);
+          setError(`Erro ao registrar privilégios de administrador: ${rpcErr.message}`);
+          setLoading(false);
+          return;
+        }
       }
 
       setSuccessMsg("Administrador criado com sucesso! Inicializando sessão...");
+
+      // Step 4: Sign in with created credentials
+      await signIn(email.trim(), password);
       await refreshProfile();
 
       setTimeout(async () => {
