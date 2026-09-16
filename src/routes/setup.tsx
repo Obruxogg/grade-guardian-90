@@ -87,22 +87,18 @@ function SetupPage() {
     setLoading(true);
 
     try {
-      // Step 1: Try server-side RPC bootstrap_admin_account (bypasses Signups not allowed restriction)
-      const { data: rpcAccountData, error: rpcAccountErr } = await supabase.rpc(
-        "bootstrap_admin_account",
-        {
-          p_email: email.trim(),
-          p_password: password,
-          p_full_name: fullName.trim(),
-        }
-      );
+      // Step 1: Attempt sign in first in case account already exists in Supabase Auth
+      const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
 
-      if (!rpcAccountErr && rpcAccountData) {
-        console.log("[Setup] Account created via RPC bootstrap_admin_account:", rpcAccountData);
+      let authenticatedUser = signInData?.user;
+
+      if (!signInErr && authenticatedUser) {
+        console.log("[Setup] User successfully authenticated via signInWithPassword:", authenticatedUser.id);
       } else {
-        console.warn("[Setup] RPC bootstrap_admin_account unavailable or failed, attempting auth.signUp():", rpcAccountErr);
-        
-        // Step 2: Fallback to Supabase Auth signUp
+        // Step 2: Try signUp if account does not exist
         const { data: authData, error: authErr } = await supabase.auth.signUp({
           email: email.trim(),
           password,
@@ -117,7 +113,7 @@ function SetupPage() {
           console.error("[Setup] Auth signup error:", authErr);
           if (authErr.message.includes("Signups not allowed")) {
             setError(
-              "As inscrições públicas estão desabilitadas nesta instância do Supabase. Para ativá-las, acesse o painel do Supabase -> Authentication -> Providers -> Email e ative 'Enable Signups'."
+              "Inscrições públicas desabilitadas no Supabase Cloud: Para cadastrar o primeiro administrador, acesse o painel do Supabase -> Authentication -> Providers -> Email e ative 'Enable Signups'. Caso já possua uma conta, verifique se a senha digitada está correta."
             );
           } else {
             setError(`Erro ao criar conta de autenticação: ${authErr.message}`);
@@ -126,29 +122,32 @@ function SetupPage() {
           return;
         }
 
-        if (!authData.user) {
-          setError("Não foi possível criar o usuário de autenticação.");
-          setLoading(false);
-          return;
-        }
-
-        // Step 3: Invoke server RPC to assign admin profile & role
-        const { error: rpcErr } = await supabase.rpc("bootstrap_admin", {
-          p_full_name: fullName.trim(),
-        });
-
-        if (rpcErr) {
-          console.error("[Setup] Bootstrap RPC error:", rpcErr);
-          setError(`Erro ao registrar privilégios de administrador: ${rpcErr.message}`);
-          setLoading(false);
-          return;
-        }
+        authenticatedUser = authData?.user ?? null;
       }
 
-      setSuccessMsg("Administrador criado com sucesso! Inicializando sessão...");
+      if (!authenticatedUser) {
+        setError("Não foi possível autenticar o usuário.");
+        setLoading(false);
+        return;
+      }
 
-      // Step 4: Sign in with created credentials
-      await signIn(email.trim(), password);
+      // Step 3: Insert or update profile and admin role directly
+      await supabase.from("profiles").upsert({
+        id: authenticatedUser.id,
+        full_name: fullName.trim(),
+        email: email.trim(),
+        status: "active",
+      });
+
+      await supabase.from("user_roles").upsert(
+        {
+          user_id: authenticatedUser.id,
+          role: "admin",
+        },
+        { onConflict: "user_id,role" }
+      );
+
+      setSuccessMsg("Administrador criado e ativado com sucesso! Inicializando sessão...");
       await refreshProfile();
 
       setTimeout(async () => {
