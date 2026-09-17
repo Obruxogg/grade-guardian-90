@@ -116,25 +116,59 @@ function SetupPage() {
         return;
       }
 
-      // Step 2: Use bootstrap_admin_account RPC — bypasses "Signups not allowed"
-      // This function directly inserts into auth.users with SECURITY DEFINER
-      const { data: bootstrapUserId, error: bootstrapErr } = await supabase.rpc(
-        "bootstrap_admin_account",
-        {
+      // Step 2: Create Admin Account with RPC (bypasses "Signups not allowed" restriction)
+      let bootstrapUserId: string | null = null;
+      let lastRpcError: any = null;
+
+      // Attempt 2a: Call with signature (p_email, p_full_name, p_password)
+      const res1 = await supabase.rpc("bootstrap_admin_account" as any, {
+        p_email: email.trim(),
+        p_full_name: fullName.trim(),
+        p_password: password,
+      });
+
+      if (!res1.error && res1.data) {
+        bootstrapUserId = res1.data as string;
+      } else {
+        // Attempt 2b: Call with signature (p_email, p_password, p_full_name)
+        const res2 = await supabase.rpc("bootstrap_admin_account" as any, {
           p_email: email.trim(),
           p_password: password,
           p_full_name: fullName.trim(),
-        }
-      );
+        });
 
-      if (bootstrapErr) {
-        console.error("[Setup] bootstrap_admin_account error:", bootstrapErr);
-        setError(`Erro ao criar administrador: ${bootstrapErr.message}`);
-        setLoading(false);
-        return;
+        if (!res2.error && res2.data) {
+          bootstrapUserId = res2.data as string;
+        } else {
+          lastRpcError = res2.error || res1.error;
+
+          // Attempt 2c: Fallback to standard Supabase Auth signUp if RPC isn't available yet
+          const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
+            email: email.trim(),
+            password: password,
+            options: {
+              data: {
+                full_name: fullName.trim(),
+              },
+            },
+          });
+
+          if (signUpErr && !signUpData?.user) {
+            console.error("[Setup] bootstrap_admin_account error:", lastRpcError, "signUp error:", signUpErr);
+            setError(`Erro ao criar administrador: ${lastRpcError?.message || signUpErr.message}`);
+            setLoading(false);
+            return;
+          }
+
+          if (signUpData?.user) {
+            bootstrapUserId = signUpData.user.id;
+            // Also call bootstrap_admin RPC if session was established
+            await supabase.rpc("bootstrap_admin", { p_full_name: fullName.trim() });
+          }
+        }
       }
 
-      console.log("[Setup] Admin account created via RPC, user_id:", bootstrapUserId);
+      console.log("[Setup] Admin account created, user_id:", bootstrapUserId);
 
       // Step 3: Sign in with the newly created credentials
       const { data: newSignIn, error: newSignInErr } = await supabase.auth.signInWithPassword({

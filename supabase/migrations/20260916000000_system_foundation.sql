@@ -142,6 +142,22 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.bootstrap_admin_account(text, text, text) TO anon, authenticated, service_role;
 
+-- 2c. Parameter order overload for schema cache compatibility (p_email, p_full_name, p_password)
+CREATE OR REPLACE FUNCTION public.bootstrap_admin_account(
+  p_email text,
+  p_full_name text,
+  p_password text
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, private, auth, extensions
+AS $$
+BEGIN
+  RETURN public.bootstrap_admin_account(p_email, p_password, p_full_name);
+END;
+$$;
+
 -- 3. Admin create teacher function with server-side temporary password generation
 CREATE OR REPLACE FUNCTION public.admin_create_teacher(
   p_email text,
