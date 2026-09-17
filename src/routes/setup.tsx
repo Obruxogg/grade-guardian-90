@@ -16,6 +16,8 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, p
 $$;
 GRANT EXECUTE ON FUNCTION public.is_setup_required() TO anon, authenticated, service_role;
 
+DROP FUNCTION IF EXISTS public.bootstrap_admin_account(text, text, text);
+
 CREATE OR REPLACE FUNCTION public.bootstrap_admin_account(p_email text, p_password text, p_full_name text)
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, private, auth, extensions AS $$
 DECLARE _user_id uuid; _encrypted_pwd text;
@@ -38,12 +40,6 @@ BEGIN
   INSERT INTO public.user_roles (user_id, role) VALUES (_user_id, 'admin'::public.app_role) ON CONFLICT (user_id, role) DO NOTHING;
   RETURN _user_id;
 END;
-$$;
-GRANT EXECUTE ON FUNCTION public.bootstrap_admin_account(text, text, text) TO anon, authenticated, service_role;
-
-CREATE OR REPLACE FUNCTION public.bootstrap_admin_account(p_email text, p_full_name text, p_password text)
-RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, private, auth, extensions AS $$
-BEGIN RETURN public.bootstrap_admin_account(p_email, p_password, p_full_name); END;
 $$;
 GRANT EXECUTE ON FUNCTION public.bootstrap_admin_account(text, text, text) TO anon, authenticated, service_role;`;
 
