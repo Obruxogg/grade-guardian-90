@@ -134,7 +134,7 @@ function AdminDashboard() {
           storage: "ok",
         });
       } else {
-        setSystemStatus(data as SystemStatusData);
+        setSystemStatus((data as unknown) as SystemStatusData);
       }
     } catch (err) {
       console.error("[Admin] Exception fetching system status:", err);
@@ -171,7 +171,7 @@ function AdminDashboard() {
         p_email: newTeacherEmail.trim(),
         p_full_name: newTeacherName.trim(),
         p_status: newTeacherStatus,
-        p_password: newTeacherPassword ? newTeacherPassword : null,
+        p_password: newTeacherPassword ? newTeacherPassword : undefined,
       });
 
       if (rpcErr) {

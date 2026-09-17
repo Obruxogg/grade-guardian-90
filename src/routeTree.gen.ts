@@ -11,13 +11,13 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AlunoRouteImport } from './routes/aluno'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as SetupRouteImport } from './routes/setup'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ProfessorRouteImport } from './routes/professor'
-import { Route as AlunoRouteImport } from './routes/aluno'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedImportarAlunosRouteImport } from './routes/_authenticated/importar-alunos'
 
@@ -26,60 +26,50 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
-const SetupRoute = SetupRouteImport.update({
-  id: '/setup',
-  path: '/setup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-
-const ProfessorRoute = ProfessorRouteImport.update({
-  id: '/professor',
-  path: '/professor',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
 const AlunoRoute = AlunoRouteImport.update({
   id: '/aluno',
   path: '/aluno',
   getParentRoute: () => rootRouteImport,
 } as any)
-
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfessorRoute = ProfessorRouteImport.update({
+  id: '/professor',
+  path: '/professor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-
 const AuthenticatedImportarAlunosRoute =
   AuthenticatedImportarAlunosRouteImport.update({
     id: '/importar-alunos',
@@ -89,76 +79,92 @@ const AuthenticatedImportarAlunosRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/aluno': typeof AlunoRoute
   '/auth': typeof AuthRoute
   '/login': typeof LoginRoute
-  '/setup': typeof SetupRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/admin': typeof AdminRoute
   '/professor': typeof ProfessorRoute
-  '/aluno': typeof AlunoRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/setup': typeof SetupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/importar-alunos': typeof AuthenticatedImportarAlunosRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/aluno': typeof AlunoRoute
   '/auth': typeof AuthRoute
   '/login': typeof LoginRoute
-  '/setup': typeof SetupRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/admin': typeof AdminRoute
   '/professor': typeof ProfessorRoute
-  '/aluno': typeof AlunoRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/setup': typeof SetupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/importar-alunos': typeof AuthenticatedImportarAlunosRoute
 }
-
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/admin': typeof AdminRoute
+  '/aluno': typeof AlunoRoute
   '/auth': typeof AuthRoute
   '/login': typeof LoginRoute
-  '/setup': typeof SetupRoute
-  '/reset-password': typeof ResetPasswordRoute
-  '/admin': typeof AdminRoute
   '/professor': typeof ProfessorRoute
-  '/aluno': typeof AlunoRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/setup': typeof SetupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/importar-alunos': typeof AuthenticatedImportarAlunosRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/login' | '/setup' | '/reset-password' | '/admin' | '/professor' | '/aluno' | '/dashboard' | '/importar-alunos'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/aluno'
+    | '/auth'
+    | '/login'
+    | '/professor'
+    | '/reset-password'
+    | '/setup'
+    | '/dashboard'
+    | '/importar-alunos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/login' | '/setup' | '/reset-password' | '/admin' | '/professor' | '/aluno' | '/dashboard' | '/importar-alunos'
+  to:
+    | '/'
+    | '/admin'
+    | '/aluno'
+    | '/auth'
+    | '/login'
+    | '/professor'
+    | '/reset-password'
+    | '/setup'
+    | '/dashboard'
+    | '/importar-alunos'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/admin'
+    | '/aluno'
     | '/auth'
     | '/login'
-    | '/setup'
-    | '/reset-password'
-    | '/admin'
     | '/professor'
-    | '/aluno'
+    | '/reset-password'
+    | '/setup'
     | '/_authenticated/dashboard'
     | '/_authenticated/importar-alunos'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AdminRoute: typeof AdminRoute
+  AlunoRoute: typeof AlunoRoute
   AuthRoute: typeof AuthRoute
   LoginRoute: typeof LoginRoute
-  SetupRoute: typeof SetupRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
-  AdminRoute: typeof AdminRoute
   ProfessorRoute: typeof ProfessorRoute
-  AlunoRoute: typeof AlunoRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SetupRoute: typeof SetupRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -177,6 +183,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aluno': {
+      id: '/aluno'
+      path: '/aluno'
+      fullPath: '/aluno'
+      preLoaderRoute: typeof AlunoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -191,11 +211,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/setup': {
-      id: '/setup'
-      path: '/setup'
-      fullPath: '/setup'
-      preLoaderRoute: typeof SetupRouteImport
+    '/professor': {
+      id: '/professor'
+      path: '/professor'
+      fullPath: '/professor'
+      preLoaderRoute: typeof ProfessorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -205,25 +225,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/professor': {
-      id: '/professor'
-      path: '/professor'
-      fullPath: '/professor'
-      preLoaderRoute: typeof ProfessorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/aluno': {
-      id: '/aluno'
-      path: '/aluno'
-      fullPath: '/aluno'
-      preLoaderRoute: typeof AlunoRouteImport
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -259,15 +265,14 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AdminRoute: AdminRoute,
+  AlunoRoute: AlunoRoute,
   AuthRoute: AuthRoute,
   LoginRoute: LoginRoute,
-  SetupRoute: SetupRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
-  AdminRoute: AdminRoute,
   ProfessorRoute: ProfessorRoute,
-  AlunoRoute: AlunoRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SetupRoute: SetupRoute,
 }
-
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()

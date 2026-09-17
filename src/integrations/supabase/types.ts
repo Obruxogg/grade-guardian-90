@@ -983,7 +983,37 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_setup_required: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      bootstrap_admin: {
+        Args: {
+          p_full_name?: string | undefined
+        }
+        Returns: undefined
+      }
+      bootstrap_admin_account: {
+        Args: {
+          p_email?: string | undefined
+          p_password?: string | undefined
+          p_full_name?: string | undefined
+        }
+        Returns: string
+      }
+      admin_create_teacher: {
+        Args: {
+          p_email?: string | undefined
+          p_full_name?: string | undefined
+          p_status?: string | undefined
+          p_password?: string | null | undefined
+        }
+        Returns: Json
+      }
+      get_system_status: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "teacher" | "student"

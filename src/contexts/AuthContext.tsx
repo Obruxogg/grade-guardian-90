@@ -61,13 +61,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(profileData as UserProfile);
       } else {
         // Fallback: create default profile if missing
-        const fallbackName = currentUser.user_metadata?.full_name || currentUser.email?.split("@")[0] || "Usuário";
+        const metadata = currentUser.user_metadata as Record<string, any> | undefined;
+        const fallbackName = (metadata?.['full_name'] as string | undefined) || currentUser.email?.split("@")[0] || "Usuário";
         const { data: newProfile } = await supabase
           .from("profiles")
           .insert({
             id: currentUser.id,
             full_name: fallbackName,
-            email: currentUser.email,
+            email: currentUser.email ?? null,
             status: "active",
           })
           .select("id, full_name, email, status")
