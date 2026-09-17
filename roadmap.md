@@ -1,6 +1,7 @@
 # Roadmap
 
-- [x] Fundação segura: autenticação, perfis, estrutura acadêmica e auditoria
+- [ ] Correção crítica da fundação: bootstrap do primeiro admin, login, AuthContext, RBAC, dashboards admin/professor, cadastro de professor e testes ponta a ponta
+- [x] Fundação segura: estrutura acadêmica e auditoria
 - [x] Importação de alunos com mapeamento, validação e prévia
 - [ ] Provas, questões, publicação, tentativas, autosave e entrega
 - [ ] Correção, notas, resultados e histórico
