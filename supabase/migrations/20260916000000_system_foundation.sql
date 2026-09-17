@@ -1,7 +1,8 @@
 -- Migration: 20260916000000_system_foundation.sql
 -- Description: Core foundation RPC functions, bootstrap admin, safe teacher creation with server-side temporary password generation, system status, and updated RLS.
 
--- 0. Ensure email column exists on teachers table
+-- 0. Ensure required extensions and columns exist
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS email text;
 
 -- 1. Helper function to check if initial setup is required (0 admins exist)

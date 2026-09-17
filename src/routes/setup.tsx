@@ -1,10 +1,51 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { ShieldCheck, Loader2, CheckCircle2, Lock, ArrowRight, User, Mail, KeyRound } from "lucide-react";
+import { ShieldCheck, Loader2, CheckCircle2, Lock, ArrowRight, User, Mail, KeyRound, Copy, Check, Terminal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const INITIAL_MIGRATION_SQL = `-- Executar no SQL Editor do Supabase Dashboard
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+ALTER TABLE public.teachers ADD COLUMN IF NOT EXISTS email text;
+
+CREATE OR REPLACE FUNCTION public.is_setup_required()
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, private AS $$
+  SELECT NOT EXISTS (SELECT 1 FROM public.user_roles WHERE role = 'admin'::public.app_role);
+$$;
+GRANT EXECUTE ON FUNCTION public.is_setup_required() TO anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.bootstrap_admin_account(p_email text, p_password text, p_full_name text)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, private, auth, extensions AS $$
+DECLARE _user_id uuid; _encrypted_pwd text;
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.user_roles WHERE role = 'admin'::public.app_role) THEN
+    RAISE EXCEPTION 'Configuração inicial já concluída.';
+  END IF;
+  IF p_email IS NULL OR trim(p_email) = '' THEN RAISE EXCEPTION 'E-mail é obrigatório.'; END IF;
+  IF p_password IS NULL OR length(p_password) < 6 THEN RAISE EXCEPTION 'Senha deve ter no mínimo 6 caracteres.'; END IF;
+  _encrypted_pwd := crypt(p_password, gen_salt('bf'));
+  SELECT id INTO _user_id FROM auth.users WHERE email = p_email;
+  IF _user_id IS NOT NULL THEN
+    UPDATE auth.users SET encrypted_password = _encrypted_pwd, email_confirmed_at = COALESCE(email_confirmed_at, now()), raw_user_meta_data = jsonb_build_object('full_name', p_full_name), updated_at = now() WHERE id = _user_id;
+  ELSE
+    _user_id := gen_random_uuid();
+    INSERT INTO auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud)
+    VALUES (_user_id, '00000000-0000-0000-0000-000000000000', p_email, _encrypted_pwd, now(), '{"provider":"email","providers":["email"]}'::jsonb, jsonb_build_object('full_name', p_full_name), now(), now(), 'authenticated', 'authenticated');
+  END IF;
+  INSERT INTO public.profiles (id, full_name, email, status) VALUES (_user_id, COALESCE(NULLIF(trim(p_full_name), ''), 'Administrador'), p_email, 'active'::public.record_status) ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name, email = EXCLUDED.email;
+  INSERT INTO public.user_roles (user_id, role) VALUES (_user_id, 'admin'::public.app_role) ON CONFLICT (user_id, role) DO NOTHING;
+  RETURN _user_id;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION public.bootstrap_admin_account(text, text, text) TO anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.bootstrap_admin_account(p_email text, p_full_name text, p_password text)
+RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, private, auth, extensions AS $$
+BEGIN RETURN public.bootstrap_admin_account(p_email, p_password, p_full_name); END;
+$$;
+GRANT EXECUTE ON FUNCTION public.bootstrap_admin_account(text, text, text) TO anon, authenticated, service_role;`;
 
 export const Route = createFileRoute("/setup")({
   head: () => ({
@@ -31,6 +72,8 @@ function SetupPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [showSqlGuide, setShowSqlGuide] = useState(false);
+  const [copiedSql, setCopiedSql] = useState(false);
 
   useEffect(() => {
     checkSetupStatus();
@@ -59,10 +102,17 @@ function SetupPage() {
     }
   };
 
+  const copySqlToClipboard = () => {
+    navigator.clipboard.writeText(INITIAL_MIGRATION_SQL);
+    setCopiedSql(true);
+    setTimeout(() => setCopiedSql(false), 3000);
+  };
+
   const handleBootstrap = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
+    setShowSqlGuide(false);
 
     if (!fullName || fullName.trim().length < 2) {
       setError("Por favor, informe seu nome completo.");
@@ -94,7 +144,6 @@ function SetupPage() {
       });
 
       if (!signInErr && signInData?.user) {
-        // Account already exists and credentials are correct — just assign role/profile
         console.log("[Setup] Existing user authenticated:", signInData.user.id);
         const userId = signInData.user.id;
 
@@ -142,7 +191,7 @@ function SetupPage() {
         } else {
           lastRpcError = res2.error || res1.error;
 
-          // Attempt 2c: Fallback to standard Supabase Auth signUp if RPC isn't available yet
+          // Attempt 2c: Fallback to standard Supabase Auth signUp
           const { data: signUpData, error: signUpErr } = await supabase.auth.signUp({
             email: email.trim(),
             password: password,
@@ -155,14 +204,22 @@ function SetupPage() {
 
           if (signUpErr && !signUpData?.user) {
             console.error("[Setup] bootstrap_admin_account error:", lastRpcError, "signUp error:", signUpErr);
-            setError(`Erro ao criar administrador: ${lastRpcError?.message || signUpErr.message}`);
+            
+            const isMissingFunction = lastRpcError?.message?.includes("Could not find the function") || 
+                                     lastRpcError?.code === "PGRST202";
+
+            if (isMissingFunction) {
+              setShowSqlGuide(true);
+              setError("A função de inicialização ainda não foi executada no seu banco de dados Supabase.");
+            } else {
+              setError(`Erro ao criar administrador: ${lastRpcError?.message || signUpErr.message}`);
+            }
             setLoading(false);
             return;
           }
 
           if (signUpData?.user) {
             bootstrapUserId = signUpData.user.id;
-            // Also call bootstrap_admin RPC if session was established
             await supabase.rpc("bootstrap_admin", { p_full_name: fullName.trim() });
           }
         }
@@ -178,7 +235,7 @@ function SetupPage() {
 
       if (newSignInErr || !newSignIn?.user) {
         setError(
-          "Conta criada com sucesso, mas houve um problema ao iniciar a sessão. Tente fazer login normalmente."
+          "Conta criada no banco de dados. Tente realizar o login pela tela de login."
         );
         setLoading(false);
         return;
@@ -329,6 +386,33 @@ function SetupPage() {
             {error && (
               <div role="alert" className="rounded-lg bg-destructive/10 p-3 text-xs font-medium text-destructive">
                 {error}
+              </div>
+            )}
+
+            {showSqlGuide && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs">
+                <div className="flex items-center gap-2 font-semibold text-amber-700 dark:text-amber-400">
+                  <Terminal className="size-4 shrink-0" />
+                  <span>Ação necessária no Supabase Dashboard:</span>
+                </div>
+                <ol className="mt-2 list-decimal list-inside space-y-1 text-muted-foreground">
+                  <li>Acesse o seu projeto no <strong>Supabase Dashboard</strong>.</li>
+                  <li>Vá na aba <strong>SQL Editor</strong> na barra lateral esquerda.</li>
+                  <li>Clique no botão abaixo para copiar o script SQL de inicialização.</li>
+                  <li>Cole no SQL Editor do Supabase e clique em <strong>Run</strong>.</li>
+                </ol>
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={copySqlToClipboard}
+                    className="h-9 gap-1.5 text-xs font-semibold bg-background"
+                  >
+                    {copiedSql ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+                    {copiedSql ? "Copiado com Sucesso!" : "Copiar SQL de Inicialização"}
+                  </Button>
+                </div>
               </div>
             )}
 
