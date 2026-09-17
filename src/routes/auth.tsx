@@ -1,17 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-import LoginPage from "./login";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/auth")({
-  head: () => ({
-    meta: [
-      { title: "Entrar | Repertório" },
-      { name: "description", content: "Acesso seguro para equipe e alunos do Repertório." },
-    ],
-  }),
-  component: RouteComponent,
+  beforeLoad: () => { throw redirect({ to: "/login" }); },
+  head: () => ({ meta: [
+    { title: "Entrar | Repertório" },
+    { name: "description", content: "Acesso seguro ao Repertório para alunos e equipe." },
+    { property: "og:title", content: "Entrar | Repertório" },
+    { property: "og:description", content: "Acesso seguro ao Repertório para alunos e equipe." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ] }), component: () => null,
 });
-
-function RouteComponent() {
-  const Component = LoginPage.component;
-  return <Component />;
-}

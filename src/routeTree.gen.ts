@@ -11,154 +11,225 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as SetupRouteImport } from './routes/setup'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as ProfessorRouteImport } from './routes/professor'
 import { Route as AlunoRouteImport } from './routes/aluno'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ProfessorRouteImport } from './routes/professor'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedImportarAlunosRouteImport } from './routes/_authenticated/importar-alunos'
+import { Route as AdminSectionRouteImport } from './routes/admin_.$section'
+import { Route as AdminConfiguracoesRouteImport } from './routes/admin_.configuracoes'
+import { Route as AdminProfessoresRouteImport } from './routes/admin_.professores'
+import { Route as ProfessorSectionRouteImport } from './routes/professor_.$section'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
-const SetupRoute = SetupRouteImport.update({
-  id: '/setup',
-  path: '/setup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-
-const ProfessorRoute = ProfessorRouteImport.update({
-  id: '/professor',
-  path: '/professor',
-  getParentRoute: () => rootRouteImport,
-} as any)
-
 const AlunoRoute = AlunoRouteImport.update({
   id: '/aluno',
   path: '/aluno',
   getParentRoute: () => rootRouteImport,
 } as any)
-
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfessorRoute = ProfessorRouteImport.update({
+  id: '/professor',
+  path: '/professor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-
 const AuthenticatedImportarAlunosRoute =
   AuthenticatedImportarAlunosRouteImport.update({
     id: '/importar-alunos',
     path: '/importar-alunos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AdminSectionRoute = AdminSectionRouteImport.update({
+  id: '/admin_/$section',
+  path: '/admin/$section',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
+  id: '/admin_/configuracoes',
+  path: '/admin/configuracoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminProfessoresRoute = AdminProfessoresRouteImport.update({
+  id: '/admin_/professores',
+  path: '/admin/professores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfessorSectionRoute = ProfessorSectionRouteImport.update({
+  id: '/professor_/$section',
+  path: '/professor/$section',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
-  '/login': typeof LoginRoute
-  '/setup': typeof SetupRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AdminRoute
-  '/professor': typeof ProfessorRoute
   '/aluno': typeof AlunoRoute
+  '/auth': typeof AuthRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/professor': typeof ProfessorRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/setup': typeof SetupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/importar-alunos': typeof AuthenticatedImportarAlunosRoute
+  '/admin/$section': typeof AdminSectionRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/professores': typeof AdminProfessoresRoute
+  '/professor/$section': typeof ProfessorSectionRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
-  '/login': typeof LoginRoute
-  '/setup': typeof SetupRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AdminRoute
-  '/professor': typeof ProfessorRoute
   '/aluno': typeof AlunoRoute
+  '/auth': typeof AuthRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/professor': typeof ProfessorRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/setup': typeof SetupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/importar-alunos': typeof AuthenticatedImportarAlunosRoute
+  '/admin/$section': typeof AdminSectionRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/professores': typeof AdminProfessoresRoute
+  '/professor/$section': typeof ProfessorSectionRoute
 }
-
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
-  '/login': typeof LoginRoute
-  '/setup': typeof SetupRoute
-  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AdminRoute
-  '/professor': typeof ProfessorRoute
   '/aluno': typeof AlunoRoute
+  '/auth': typeof AuthRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/login': typeof LoginRoute
+  '/professor': typeof ProfessorRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/setup': typeof SetupRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/importar-alunos': typeof AuthenticatedImportarAlunosRoute
+  '/admin_/$section': typeof AdminSectionRoute
+  '/admin_/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin_/professores': typeof AdminProfessoresRoute
+  '/professor_/$section': typeof ProfessorSectionRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/login' | '/setup' | '/reset-password' | '/admin' | '/professor' | '/aluno' | '/dashboard' | '/importar-alunos'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/aluno'
+    | '/auth'
+    | '/forgot-password'
+    | '/login'
+    | '/professor'
+    | '/reset-password'
+    | '/setup'
+    | '/dashboard'
+    | '/importar-alunos'
+    | '/admin/$section'
+    | '/admin/configuracoes'
+    | '/admin/professores'
+    | '/professor/$section'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/login' | '/setup' | '/reset-password' | '/admin' | '/professor' | '/aluno' | '/dashboard' | '/importar-alunos'
+  to:
+    | '/'
+    | '/admin'
+    | '/aluno'
+    | '/auth'
+    | '/forgot-password'
+    | '/login'
+    | '/professor'
+    | '/reset-password'
+    | '/setup'
+    | '/dashboard'
+    | '/importar-alunos'
+    | '/admin/$section'
+    | '/admin/configuracoes'
+    | '/admin/professores'
+    | '/professor/$section'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/auth'
-    | '/login'
-    | '/setup'
-    | '/reset-password'
     | '/admin'
-    | '/professor'
     | '/aluno'
+    | '/auth'
+    | '/forgot-password'
+    | '/login'
+    | '/professor'
+    | '/reset-password'
+    | '/setup'
     | '/_authenticated/dashboard'
     | '/_authenticated/importar-alunos'
+    | '/admin_/$section'
+    | '/admin_/configuracoes'
+    | '/admin_/professores'
+    | '/professor_/$section'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
-  LoginRoute: typeof LoginRoute
-  SetupRoute: typeof SetupRoute
-  ResetPasswordRoute: typeof ResetPasswordRoute
   AdminRoute: typeof AdminRoute
-  ProfessorRoute: typeof ProfessorRoute
   AlunoRoute: typeof AlunoRoute
+  AuthRoute: typeof AuthRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  LoginRoute: typeof LoginRoute
+  ProfessorRoute: typeof ProfessorRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SetupRoute: typeof SetupRoute
+  AdminSectionRoute: typeof AdminSectionRoute
+  AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
+  AdminProfessoresRoute: typeof AdminProfessoresRoute
+  ProfessorSectionRoute: typeof ProfessorSectionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -177,11 +248,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aluno': {
+      id: '/aluno'
+      path: '/aluno'
+      fullPath: '/aluno'
+      preLoaderRoute: typeof AlunoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -191,11 +283,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/setup': {
-      id: '/setup'
-      path: '/setup'
-      fullPath: '/setup'
-      preLoaderRoute: typeof SetupRouteImport
+    '/professor': {
+      id: '/professor'
+      path: '/professor'
+      fullPath: '/professor'
+      preLoaderRoute: typeof ProfessorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -205,25 +297,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/professor': {
-      id: '/professor'
-      path: '/professor'
-      fullPath: '/professor'
-      preLoaderRoute: typeof ProfessorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/aluno': {
-      id: '/aluno'
-      path: '/aluno'
-      fullPath: '/aluno'
-      preLoaderRoute: typeof AlunoRouteImport
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -239,6 +317,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/importar-alunos'
       preLoaderRoute: typeof AuthenticatedImportarAlunosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/admin_/$section': {
+      id: '/admin_/$section'
+      path: '/admin/$section'
+      fullPath: '/admin/$section'
+      preLoaderRoute: typeof AdminSectionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin_/configuracoes': {
+      id: '/admin_/configuracoes'
+      path: '/admin/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AdminConfiguracoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin_/professores': {
+      id: '/admin_/professores'
+      path: '/admin/professores'
+      fullPath: '/admin/professores'
+      preLoaderRoute: typeof AdminProfessoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/professor_/$section': {
+      id: '/professor_/$section'
+      path: '/professor/$section'
+      fullPath: '/professor/$section'
+      preLoaderRoute: typeof ProfessorSectionRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -259,15 +365,19 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
-  LoginRoute: LoginRoute,
-  SetupRoute: SetupRoute,
-  ResetPasswordRoute: ResetPasswordRoute,
   AdminRoute: AdminRoute,
-  ProfessorRoute: ProfessorRoute,
   AlunoRoute: AlunoRoute,
+  AuthRoute: AuthRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  LoginRoute: LoginRoute,
+  ProfessorRoute: ProfessorRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  SetupRoute: SetupRoute,
+  AdminSectionRoute: AdminSectionRoute,
+  AdminConfiguracoesRoute: AdminConfiguracoesRoute,
+  AdminProfessoresRoute: AdminProfessoresRoute,
+  ProfessorSectionRoute: ProfessorSectionRoute,
 }
-
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()

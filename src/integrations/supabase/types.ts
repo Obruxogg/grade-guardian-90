@@ -933,6 +933,7 @@ export type Database = {
       teachers: {
         Row: {
           created_at: string
+          email: string | null
           full_name: string
           id: string
           status: Database["public"]["Enums"]["record_status"]
@@ -941,6 +942,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          email?: string | null
           full_name: string
           id?: string
           status?: Database["public"]["Enums"]["record_status"]
@@ -949,6 +951,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           status?: Database["public"]["Enums"]["record_status"]
@@ -983,7 +986,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      bootstrap_first_admin: {
+        Args: { _email: string; _full_name: string; _user_id: string }
+        Returns: undefined
+      }
+      create_teacher_identity: {
+        Args: {
+          _actor_id: string
+          _email: string
+          _full_name: string
+          _status?: Database["public"]["Enums"]["record_status"]
+          _user_id: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "teacher" | "student"
